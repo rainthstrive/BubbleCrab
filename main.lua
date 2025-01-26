@@ -1,5 +1,5 @@
 local p1_obj
-local foodList_tbl
+--local foodList_tbl
 local enemyList_tbl
 local gameState_bool = true
 local score_int = 0
@@ -10,6 +10,13 @@ local spawnX, spawnY
 local waypoints = {}
 local waypointList = {}
 local crabSpritesheet = love.graphics.newImage("assets/spritesheets/GRID_crabanim.png")
+local enemySpritesheet = love.graphics.newImage("assets/spritesheets/GRID_4X4_128.png")
+local enemySpawnPoints = {}
+local foodSpawnPoints = {}
+local leftWaveSpawnPoints = {}
+local rightWaveSpawnPoints = {}
+local uptWaveSpawnPoints = {}
+local downWaveSpawnPoints = {}
 
 function love.load()
     -- Get Requirements
@@ -25,23 +32,18 @@ function love.load()
     local Prop = require "props"
     -- Initialize Objects
     -- Get Spawn Point from Tiled Map
-    getSpawnPoints(gameMap)
+    getCharacterSpawn(gameMap)
     p1_obj = Player(spawnX, spawnY, 30, crabSpritesheet)
     -- Set AutoCamera
-    autocam = AutoCamera(p1_obj.x, p1_obj.y, waypointList, 50)
-    wave_obj = Wave(300, 200, 50, 50, "right", 50)
-    foodList_tbl = {}
+    autocam = AutoCamera(p1_obj.x, p1_obj.y, waypointList, 200)
+    wave_obj = Wave(p1_obj.x, p1_obj.y-100, 50, 50, "right", 50)
+    --foodList_tbl = {}
+    enemySpawnPoints = getSpawnList(gameMap, "EnemySpawns")
     enemyList_tbl = {}
-    for i=1, 3 do
-        table.insert(
-            foodList_tbl,
-            Prop(math.random(15, 800), math.random(15, 600), 15, "food")            
-        )
-    end
-    for i=1, 3 do
+    for i, v in ipairs(enemySpawnPoints) do
         table.insert(
             enemyList_tbl,
-            Prop(math.random(15, 800), math.random(15, 600), 30, "enemy")            
+            Prop(v.x+64, v.y+64, 60, "enemy", enemySpritesheet)            
         )
     end
 end
@@ -53,17 +55,19 @@ function love.update(dt)
         local cameraWidth, cameraHeight = love.graphics.getWidth(), love.graphics.getHeight()
         -- Update player, passing camera boundaries
         p1_obj:update(dt, cameraX+26, cameraY+26, cameraWidth, cameraHeight)
+
         -- Check if the player enters the wave zone
         if wave_obj:checkCollision(p1_obj) then
             p1_obj:applyWaveForce(wave_obj.direction, wave_obj.force)
         end
-        for i,v in ipairs(foodList_tbl) do
-            if checkCollision(p1_obj, v) then
-                table.remove(foodList_tbl, i)
-                score_int = score_int + 1
-            end
-        end
+       -- for i,v in ipairs(foodList_tbl) do
+        --    if checkCollision(p1_obj, v) then
+        --        table.remove(foodList_tbl, i)
+        --        score_int = score_int + 1
+        --    end
+        --end
         for i,v in ipairs(enemyList_tbl) do
+            v:update(dt)
             if checkCollision(p1_obj, v) then
                 --shakeDuration_int = 0.3
                 --p1_obj:LoseLife()
@@ -101,20 +105,20 @@ function love.draw()
     gameMap:drawLayer(gameMap.layers["Currents"])
     gameMap:drawLayer(gameMap.layers["Beach"])
     gameMap:drawLayer(gameMap.layers["Decor"])
-    gameMap:drawLayer(gameMap.layers["Character"])
+    --gameMap:drawLayer(gameMap.layers["Character"])
     gameMap:drawLayer(gameMap.layers["Camera"])
     -- draw player
     p1_obj:draw()
     -- draw food
-    for i,v in ipairs(foodList_tbl) do
-        --v:draw()
-    end
+    --for i,v in ipairs(foodList_tbl) do
+    --    v:draw()
+    --end
     -- draw enemies
     for i,v in ipairs(enemyList_tbl) do
-        --v:draw()
+        v:draw()
     end
     -- draw waves
-    --wave_obj:draw()
+    wave_obj:draw()
     camera:detach()
     love.graphics.pop()
     -- print UI
@@ -126,7 +130,21 @@ function checkCollision(object, colObject)
     return distance < object.radius + colObject.radius
 end
 
-function getSpawnPoints(gameMap_in)
+function getSpawnList(gameMap_in, layerName)
+    local enemySpawns = {}
+    local spawnLayer = gameMap_in.layers[layerName]
+    
+    if spawnLayer and spawnLayer.objects then
+        for _, object in ipairs(spawnLayer.objects) do
+            local spawnX = tonumber(object.x)
+            local spawnY = tonumber(object.y)
+            table.insert(enemySpawns, {x = spawnX, y = spawnY})
+        end
+    end
+    return enemySpawns
+end
+
+function getCharacterSpawn(gameMap_in)
     local spawnPoint = gameMap_in.layers["CharacterSpawn"]
     if spawnPoint and spawnPoint.objects then
         for _, object in ipairs(spawnPoint.objects) do
