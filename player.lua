@@ -9,7 +9,7 @@ function Player:Rotate(direction_txt, dt)
         self.rotationAngle_float = self.rotationAngle_float - rotationSpeed_float * dt
     end
     self.rotationAngle_float = self.rotationAngle_float % (2 * math.pi)
-    print(self.rotationAngle_float)
+    --print(self.rotationAngle_float)
 end
 
 function Player:Move(dt)

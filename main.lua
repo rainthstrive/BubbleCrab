@@ -8,10 +8,16 @@ local shakeWait_int = 0
 local shakeOffset_int = {x = 0, y = 0}
 
 function love.load()
+    -- Get Requirements
     Object = require "classic"
+    local AutoCamera = require "autocamera"
+    local Background = require "background"
     local Player = require "player"
     local Prop = require "props"
-    p1_obj = Player(400, 300, 30, 30)
+    -- Initialize Objects
+    autocam = AutoCamera(400, 300, 20)
+    background = Background(nil, nil)
+    p1_obj = Player(400, 300, 15)
     foodList_tbl = {}
     enemyList_tbl = {}
     for i=1, 10 do
@@ -23,13 +29,14 @@ function love.load()
     for i=1, 10 do
         table.insert(
             enemyList_tbl,
-            Prop(math.random(15, 800), math.random(15, 600), 15, "enemy")            
+            Prop(math.random(15, 800), math.random(15, 600), 30, "enemy")            
         )
     end
 end
 
 function love.update(dt)
     if gameState_bool then
+        autocam:update(dt)
         p1_obj:update(dt)
         for i,v in ipairs(foodList_tbl) do
             if checkCollision(p1_obj, v) then
@@ -59,12 +66,17 @@ end
 
 function love.draw()
     love.graphics.push()
+    autocam:apply()
+    print("Camera Position: x =", autocam.x, "y =", autocam.y)
+
     -- camera position
-    love.graphics.translate(-p1_obj.x + 400, -p1_obj.y + 300)
+    --love.graphics.translate(-p1_obj.x + 400, -p1_obj.y + 300)
     -- shake camera
     if shakeDuration_int > 0 then
         love.graphics.translate(shakeOffset_int.x, shakeOffset_int.y)
     end
+    -- draw background
+    background:draw()
     -- draw player
     p1_obj:draw()
     -- draw food
