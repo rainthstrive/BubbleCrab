@@ -34,8 +34,9 @@ function Player:new(x, y, radius)
     self.minVelocity = 10
 end
 
-function Player:update(dt)
+function Player:update(dt, cameraX, cameraY, cameraWidth, cameraHeight)
     if self.alive then
+        -- Player movement and rotation logic
         if love.keyboard.isDown("left") and love.keyboard.isDown("right")  then
             self:Move(dt)
         elseif love.keyboard.isDown("right") then
@@ -43,6 +44,7 @@ function Player:update(dt)
         elseif love.keyboard.isDown("left") then
             self:Rotate("left", dt)
         end
+
         -- Apply velocity to position
         self.x = self.x + self.vx * dt
         self.y = self.y + self.vy * dt
@@ -50,8 +52,32 @@ function Player:update(dt)
         -- Apply friction to gradually slow down
         self.vx = self.vx * self.friction
         self.vy = self.vy * self.friction
+
+        -- **Boundary Check and Clamp to Camera**
+        local left = cameraX
+        local right = cameraX + cameraWidth
+        local top = cameraY
+        local bottom = cameraY + cameraHeight
+
+        -- Clamp the player's position inside camera boundaries
+        if self.x - self.radius < left then
+            self.x = left + self.radius
+            self.vx = 0 -- Stop horizontal movement
+        elseif self.x + self.radius > right then
+            self.x = right - self.radius
+            self.vx = 0
+        end
+
+        if self.y - self.radius < top then
+            self.y = top + self.radius
+            self.vy = 0 -- Stop vertical movement
+        elseif self.y + self.radius > bottom then
+            self.y = bottom - self.radius
+            self.vy = 0
+        end
     end
 end
+
 
 function Player:draw()
     if self.alive then
