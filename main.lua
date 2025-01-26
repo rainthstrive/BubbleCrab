@@ -1,24 +1,42 @@
 local p1
+local foodList
+local enemyList
+local gameState = true
 
 function love.load()
     Object = require "classic"
     local Player = require "player"
-    local Food = require "food"
+    local Prop = require "props"
     p1 = Player(400, 300, 30, 30)
     foodList = {}
-    for i=1, 5 do
+    enemyList = {}
+    for i=1, 10 do
         table.insert(
             foodList,
-            Food(math.random(50, 650), math.random(50, 450), 25)            
+            Prop(math.random(15, 800), math.random(15, 600), 15, "food")            
+        )
+    end
+    for i=1, 10 do
+        table.insert(
+            enemyList,
+            Prop(math.random(15, 800), math.random(15, 600), 15, "enemy")            
         )
     end
 end
 
 function love.update(dt)
-    p1:update(dt)
-    for i,v in ipairs(foodList) do
-        if checkCollision(p1, v) then
-            table.remove(foodList, i)
+    if gameState then
+        p1:update(dt)
+        for i,v in ipairs(foodList) do
+            if checkCollision(p1, v) then
+                table.remove(foodList, i)
+            end
+        end
+        for i,v in ipairs(enemyList) do
+            if checkCollision(p1, v) then
+                p1:LoseLife()
+                gameState = false
+            end
         end
     end
 end
@@ -26,6 +44,9 @@ end
 function love.draw()
     p1:draw()
     for i,v in ipairs(foodList) do
+        v:draw()
+    end
+    for i,v in ipairs(enemyList) do
         v:draw()
     end
 end

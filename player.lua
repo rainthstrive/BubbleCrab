@@ -25,24 +25,36 @@ function Player:new(x, y, radius)
     Player.super.new(self, x, y)
     self.radius = radius
     self.rotationAngle_float = 0
+    self.alive = true
+    self.bubble = true
 end
 
 function Player:update(dt)
-    if love.keyboard.isDown("left") and love.keyboard.isDown("right")  then
-        self:Move(dt)
-    elseif love.keyboard.isDown("right") then
-        self:Rotate("right", dt)
-    elseif love.keyboard.isDown("left") then
-        self:Rotate("left", dt)
+    if self.alive then
+        if love.keyboard.isDown("left") and love.keyboard.isDown("right")  then
+            self:Move(dt)
+        elseif love.keyboard.isDown("right") then
+            self:Rotate("right", dt)
+        elseif love.keyboard.isDown("left") then
+            self:Rotate("left", dt)
+        end
     end
 end
 
 function Player:draw()
-    love.graphics.push()
+    if self.alive then
+        love.graphics.push()
         love.graphics.translate(self.x, self.y)
         love.graphics.rotate(self.rotationAngle_float)
         love.graphics.circle("line", 0, 0, self.radius)
-    love.graphics.pop()
+        love.graphics.pop()
+    end
+end
+
+function Player:LoseLife()
+    if self.bubble then self.bubble=false end
+    if self.bubble==false and self.alive then self.alive=false end
+    if self.alive==false then print("Game Over") end
 end
 
 -- And then return it.
