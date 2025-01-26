@@ -9,11 +9,13 @@ local shakeOffset_int = {x = 0, y = 0}
 local spawnX, spawnY
 local waypoints = {}
 local waypointList = {}
+local crabSpritesheet = love.graphics.newImage("assets/spritesheets/GRID_crabanim.png")
 
 function love.load()
     -- Get Requirements
     local Sti = require "libs/sti"
     local Camera = require "libs/camera"
+    love.graphics.setDefaultFilter("nearest","nearest")
     gameMap = Sti('assets/weird_sea.lua')
     camera = Camera()
     Object = require "classic"
@@ -24,7 +26,7 @@ function love.load()
     -- Initialize Objects
     -- Get Spawn Point from Tiled Map
     getSpawnPoints(gameMap)
-    p1_obj = Player(spawnX, spawnY, 15)
+    p1_obj = Player(spawnX, spawnY, 30, crabSpritesheet)
     -- Set AutoCamera
     autocam = AutoCamera(p1_obj.x, p1_obj.y, waypointList, 50)
     wave_obj = Wave(300, 200, 50, 50, "right", 50)
@@ -71,6 +73,8 @@ function love.update(dt)
         -- Update Camera
         autocam:update(dt)
         autocam:apply(camera)
+        limitCircleInsideCamera(p1_obj, camera, gameMap)
+
     end
     if shakeDuration_int > 0 then
         shakeDuration_int = shakeDuration_int - dt
@@ -122,17 +126,6 @@ function checkCollision(object, colObject)
     return distance < object.radius + colObject.radius
 end
 
-function limitCameraSpace(cam_in, gameMap_in)
-    local w = love.graphics.getWidth()
-    local h = love.graphics.getHeight()
-    if cam_in.x < w/2 then cam_in.x = w/2 end
-    if cam_in.y < h/2 then cam_in.y = h/2 end
-    local mapW = gameMap_in.width * gameMap.tilewidth
-    local mapH = gameMap_in.heigh * gameMap.tileheight
-    if cam.x > (mapW - w/2) then cam.x = (mapW - w/2) end
-    if cam.y > (mapH - w/2) then cam.y = (mapH - w/2) end
-end
-
 function getSpawnPoints(gameMap_in)
     local spawnPoint = gameMap_in.layers["CharacterSpawn"]
     if spawnPoint and spawnPoint.objects then
@@ -172,5 +165,34 @@ function getSpawnPoints(gameMap_in)
     for i, wp in ipairs(sortedWaypoints) do
         --print(string.format("Waypoint %d: x=%d, y=%d", i, wp.x, wp.y))
         table.insert(waypointList, {x = tonumber(wp.x), y = tonumber(wp.y)})
+    end
+end
+
+function limitCircleInsideCamera(circle, camera, gameMap)
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()  -- screen width and height
+    local mapW = gameMap.width * gameMap.tilewidth  -- map width
+    local mapH = gameMap.height * gameMap.tileheight  -- map height
+    
+    -- Calculate the camera's visible area
+    local camX, camY = camera.x - w / 2, camera.y - h / 2
+    local camRight, camBottom = camX + w, camY + h
+    
+    -- Circle boundaries
+    local circleLeft = circle.x - circle.radius
+    local circleRight = circle.x + circle.radius
+    local circleTop = circle.y - circle.radius
+    local circleBottom = circle.y + circle.radius
+    
+    -- Clamp the circle's position inside the camera's visible area
+    if circleLeft < camX then
+        circle.x = camX + circle.radius  -- prevent left side overflow
+    elseif circleRight > camRight then
+        circle.x = camRight - circle.radius  -- prevent right side overflow
+    end
+    
+    if circleTop < camY then
+        circle.y = camY + circle.radius  -- prevent top side overflow
+    elseif circleBottom > camBottom then
+        circle.y = camBottom - circle.radius  -- prevent bottom side overflow
     end
 end
