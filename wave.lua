@@ -14,7 +14,7 @@ function Wave:update(circle, pushSpeed, dt)
 end
 
 function Wave:draw()
-    love.graphics.setColor(0, 0.5, 1) -- Blue rectangle for wave zone
+    love.graphics.setColor(0, 0.5, 1, 0.2) -- Blue rectangle for wave zone
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
     love.graphics.setColor(1, 1, 1) -- Reset to white
 end

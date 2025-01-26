@@ -15,8 +15,9 @@ local enemySpawnPoints = {}
 local foodSpawnPoints = {}
 local leftWaveSpawnPoints = {}
 local rightWaveSpawnPoints = {}
-local uptWaveSpawnPoints = {}
+local upWaveSpawnPoints = {}
 local downWaveSpawnPoints = {}
+local waveForce = 6
 
 function love.load()
     -- Get Requirements
@@ -36,7 +37,42 @@ function love.load()
     p1_obj = Player(spawnX, spawnY, 30, crabSpritesheet)
     -- Set AutoCamera
     autocam = AutoCamera(p1_obj.x, p1_obj.y, waypointList, 200)
-    wave_obj = Wave(p1_obj.x, p1_obj.y-100, 50, 50, "right", 50)
+    -- Left Waves
+    leftWaveSpawnPoints = getSpawnList(gameMap, "Leftwavespawns")
+    leftWaveList_tbl = {}
+    for i, v in ipairs(leftWaveSpawnPoints) do
+        table.insert(
+            leftWaveList_tbl,
+            Wave(v.x, v.y, 60, 60, "left", waveForce)            
+        )
+    end
+    -- Right Waves
+    rightWaveSpawnPoints = getSpawnList(gameMap, "RightWaveSpawns")
+    rightWaveList_tbl = {}
+    for i, v in ipairs(rightWaveSpawnPoints) do
+        table.insert(
+            rightWaveList_tbl,
+            Wave(v.x, v.y, 60, 60, "right", waveForce)            
+        )
+    end
+    -- Up Waves
+    upWaveSpawnPoints = getSpawnList(gameMap, "upwavespawn")
+    upWaveList_tbl = {}
+    for i, v in ipairs(upWaveSpawnPoints) do
+        table.insert(
+            upWaveList_tbl,
+            Wave(v.x, v.y, 60, 60, "up", waveForce)            
+        )
+    end
+    -- Down Waves
+    downWaveSpawnPoints = getSpawnList(gameMap, "downwavespawn")
+    downWaveList_tbl = {}
+    for i, v in ipairs(downWaveSpawnPoints) do
+        table.insert(
+            upWaveList_tbl,
+            Wave(v.x, v.y, 60, 60, "down", waveForce)            
+        )
+    end
     --foodList_tbl = {}
     enemySpawnPoints = getSpawnList(gameMap, "EnemySpawns")
     enemyList_tbl = {}
@@ -57,8 +93,25 @@ function love.update(dt)
         p1_obj:update(dt, cameraX+26, cameraY+26, cameraWidth, cameraHeight)
 
         -- Check if the player enters the wave zone
-        if wave_obj:checkCollision(p1_obj) then
-            p1_obj:applyWaveForce(wave_obj.direction, wave_obj.force)
+        for i,v in ipairs(leftWaveList_tbl) do
+            if v:checkCollision(p1_obj) then
+                p1_obj:applyWaveForce(v.direction, v.force)
+            end
+        end
+        for i,v in ipairs(rightWaveList_tbl) do
+            if v:checkCollision(p1_obj) then
+                p1_obj:applyWaveForce(v.direction, v.force)
+            end
+        end
+        for i,v in ipairs(upWaveList_tbl) do
+            if v:checkCollision(p1_obj) then
+                p1_obj:applyWaveForce(v.direction, v.force)
+            end
+        end
+        for i,v in ipairs(downWaveList_tbl) do
+            if v:checkCollision(p1_obj) then
+                p1_obj:applyWaveForce(v.direction, v.force)
+            end
         end
        -- for i,v in ipairs(foodList_tbl) do
         --    if checkCollision(p1_obj, v) then
@@ -118,7 +171,18 @@ function love.draw()
         v:draw()
     end
     -- draw waves
-    wave_obj:draw()
+    for i,v in ipairs(leftWaveList_tbl) do
+        v:draw()
+    end
+    for i,v in ipairs(rightWaveList_tbl) do
+        v:draw()
+    end
+    for i,v in ipairs(upWaveList_tbl) do
+        v:draw()
+    end
+    for i,v in ipairs(downWaveList_tbl) do
+        v:draw()
+    end
     camera:detach()
     love.graphics.pop()
     -- print UI
