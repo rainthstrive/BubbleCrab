@@ -4,6 +4,8 @@ local enemyList_tbl
 local gameState_bool = true
 local score_int = 0
 local shakeDuration_int = 0
+local shakeWait_int = 0
+local shakeOffset_int = {x = 0, y = 0}
 
 function love.load()
     Object = require "classic"
@@ -45,6 +47,13 @@ function love.update(dt)
     end
     if shakeDuration_int > 0 then
         shakeDuration_int = shakeDuration_int - dt
+        if shakeWait_int > 0 then
+            shakeWait_int = shakeWait_int - dt
+        else
+            shakeOffset_int.x = love.math.random(-5,5)
+            shakeOffset_int.y = love.math.random(-5,5)
+            shakeWait_int = 0.05
+        end
     end
 end
 
@@ -54,10 +63,7 @@ function love.draw()
     love.graphics.translate(-p1_obj.x + 400, -p1_obj.y + 300)
     -- shake camera
     if shakeDuration_int > 0 then
-        -- Translate with a random number between -5 an 5.
-        -- This second translate will be done based on the previous translate.
-        -- So it will not reset the previous translate.
-        love.graphics.translate(love.math.random(-5,5), love.math.random(-5,5))
+        love.graphics.translate(shakeOffset_int.x, shakeOffset_int.y)
     end
     -- draw player
     p1_obj:draw()
