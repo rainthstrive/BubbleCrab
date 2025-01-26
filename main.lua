@@ -11,16 +11,24 @@ local waypoints = {}
 local waypointList = {}
 local crabSpritesheet = love.graphics.newImage("assets/spritesheets/GRID_crabanim.png")
 local enemySpritesheet = love.graphics.newImage("assets/spritesheets/GRID_4X4_128.png")
+local foodSpritesheet = love.graphics.newImage("assets/spritesheets/basura.png")
 local enemySpawnPoints = {}
 local foodSpawnPoints = {}
 local leftWaveSpawnPoints = {}
 local rightWaveSpawnPoints = {}
 local upWaveSpawnPoints = {}
 local downWaveSpawnPoints = {}
-local waveForce = 6
+local foodSpawnPoints = {}
+local waveForce = 5
 
 function love.load()
     -- Get Requirements
+    -- Get Sounds
+    sounds = {}
+    sounds.blip = love.audio.newSource("assets/vga/BUBBLE.ogg", "static")
+    sounds.music = love.audio.newSource("assets/vga/survivor_sea.mp3", "stream")
+    sounds.music:play()
+    -- Get Libs
     local Sti = require "libs/sti"
     local Camera = require "libs/camera"
     love.graphics.setDefaultFilter("nearest","nearest")
@@ -31,6 +39,8 @@ function love.load()
     local Player = require "player"
     local Wave = require "wave"
     local Prop = require "props"
+    local Food = require "food"
+    font = love.graphics.newFont(48)
     -- Initialize Objects
     -- Get Spawn Point from Tiled Map
     getCharacterSpawn(gameMap)
@@ -73,7 +83,16 @@ function love.load()
             Wave(v.x, v.y, 60, 60, "down", waveForce)            
         )
     end
-    --foodList_tbl = {}
+    -- Food List
+    foodSpwanPoints = getSpawnList(gameMap, "FoodSpawn")
+    foodList_tbl = {}
+    for i, v in ipairs(foodSpwanPoints) do
+        table.insert(
+            foodList_tbl,
+            Food(v.x+32, v.y+32, 30, "food", foodSpritesheet)            
+        )
+    end
+    -- Enemy List
     enemySpawnPoints = getSpawnList(gameMap, "EnemySpawns")
     enemyList_tbl = {}
     for i, v in ipairs(enemySpawnPoints) do
@@ -113,18 +132,20 @@ function love.update(dt)
                 p1_obj:applyWaveForce(v.direction, v.force)
             end
         end
-       -- for i,v in ipairs(foodList_tbl) do
-        --    if checkCollision(p1_obj, v) then
-        --        table.remove(foodList_tbl, i)
-        --        score_int = score_int + 1
-        --    end
-        --end
+        for i,v in ipairs(foodList_tbl) do
+            if checkCollision(p1_obj, v) then
+                sounds.blip:play()
+                table.remove(foodList_tbl, i)
+                score_int = score_int + 1
+            end
+        end
         for i,v in ipairs(enemyList_tbl) do
             v:update(dt)
             if checkCollision(p1_obj, v) then
-                --shakeDuration_int = 0.3
-                --p1_obj:LoseLife()
-                --gameState_bool = false
+                sounds.blip:play()
+                shakeDuration_int = 0.3
+                p1_obj:LoseLife()
+                gameState_bool = false
             end
         end
         -- Update Camera
@@ -155,17 +176,17 @@ function love.draw()
     end
     -- draw background
     gameMap:drawLayer(gameMap.layers["Sea"])
-    gameMap:drawLayer(gameMap.layers["Currents"])
     gameMap:drawLayer(gameMap.layers["Beach"])
-    gameMap:drawLayer(gameMap.layers["Decor"])
+    --gameMap:drawLayer(gameMap.layers["Decor"])
+    gameMap:drawLayer(gameMap.layers["Currents"])
     --gameMap:drawLayer(gameMap.layers["Character"])
     gameMap:drawLayer(gameMap.layers["Camera"])
     -- draw player
     p1_obj:draw()
     -- draw food
-    --for i,v in ipairs(foodList_tbl) do
-    --    v:draw()
-    --end
+    for i,v in ipairs(foodList_tbl) do
+        v:draw()
+    end
     -- draw enemies
     for i,v in ipairs(enemyList_tbl) do
         v:draw()
@@ -186,7 +207,8 @@ function love.draw()
     camera:detach()
     love.graphics.pop()
     -- print UI
-    --love.graphics.print(score_int, 10, 10)
+    love.graphics.setFont(font)
+    love.graphics.print(score_int, 20, 20)
 end
 
 function checkCollision(object, colObject) 
@@ -220,8 +242,6 @@ function getCharacterSpawn(gameMap_in)
             end
         end
     end
-    --print("Spawn Point:", spawnX, spawnY)
-    
     local waypoints = {}
     -- Find the "WayPoints" layer
     local waypointLayer = gameMap_in.layers["MapWaypoints"]
