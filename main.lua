@@ -1,54 +1,77 @@
-local p1
-local foodList
-local enemyList
-local gameState = true
+local p1_obj
+local foodList_tbl
+local enemyList_tbl
+local gameState_bool = true
+local score_int = 0
+local shakeDuration_int = 0
 
 function love.load()
     Object = require "classic"
     local Player = require "player"
     local Prop = require "props"
-    p1 = Player(400, 300, 30, 30)
-    foodList = {}
-    enemyList = {}
+    p1_obj = Player(400, 300, 30, 30)
+    foodList_tbl = {}
+    enemyList_tbl = {}
     for i=1, 10 do
         table.insert(
-            foodList,
+            foodList_tbl,
             Prop(math.random(15, 800), math.random(15, 600), 15, "food")            
         )
     end
     for i=1, 10 do
         table.insert(
-            enemyList,
+            enemyList_tbl,
             Prop(math.random(15, 800), math.random(15, 600), 15, "enemy")            
         )
     end
 end
 
 function love.update(dt)
-    if gameState then
-        p1:update(dt)
-        for i,v in ipairs(foodList) do
-            if checkCollision(p1, v) then
-                table.remove(foodList, i)
+    if gameState_bool then
+        p1_obj:update(dt)
+        for i,v in ipairs(foodList_tbl) do
+            if checkCollision(p1_obj, v) then
+                table.remove(foodList_tbl, i)
+                score_int = score_int + 1
             end
         end
-        for i,v in ipairs(enemyList) do
-            if checkCollision(p1, v) then
-                p1:LoseLife()
-                gameState = false
+        for i,v in ipairs(enemyList_tbl) do
+            if checkCollision(p1_obj, v) then
+                shakeDuration_int = 0.3
+                p1_obj:LoseLife()
+                gameState_bool = false
             end
         end
+    end
+    if shakeDuration_int > 0 then
+        shakeDuration_int = shakeDuration_int - dt
     end
 end
 
 function love.draw()
-    p1:draw()
-    for i,v in ipairs(foodList) do
+    love.graphics.push()
+    -- camera position
+    love.graphics.translate(-p1_obj.x + 400, -p1_obj.y + 300)
+    -- shake camera
+    if shakeDuration_int > 0 then
+        -- Translate with a random number between -5 an 5.
+        -- This second translate will be done based on the previous translate.
+        -- So it will not reset the previous translate.
+        love.graphics.translate(love.math.random(-5,5), love.math.random(-5,5))
+    end
+    -- draw player
+    p1_obj:draw()
+    -- draw food
+    for i,v in ipairs(foodList_tbl) do
         v:draw()
     end
-    for i,v in ipairs(enemyList) do
+    -- draw enemies
+    for i,v in ipairs(enemyList_tbl) do
         v:draw()
     end
+    -- print UI
+    love.graphics.pop()
+    love.graphics.print(score_int, 10, 10)
 end
 
 function checkCollision(object, colObject) 
