@@ -1,54 +1,95 @@
-local p1
-local foodList
-local enemyList
-local gameState = true
+local p1_obj
+local foodList_tbl
+local enemyList_tbl
+local gameState_bool = true
+local score_int = 0
+local shakeDuration_int = 0
+local shakeWait_int = 0
+local shakeOffset_int = {x = 0, y = 0}
 
 function love.load()
+    -- Get Requirements
     Object = require "classic"
+    local AutoCamera = require "autocamera"
+    local Background = require "background"
     local Player = require "player"
     local Prop = require "props"
-    p1 = Player(400, 300, 30, 30)
-    foodList = {}
-    enemyList = {}
+    -- Initialize Objects
+    autocam = AutoCamera(400, 300, 20)
+    background = Background(nil, nil)
+    p1_obj = Player(400, 300, 15)
+    foodList_tbl = {}
+    enemyList_tbl = {}
     for i=1, 10 do
         table.insert(
-            foodList,
+            foodList_tbl,
             Prop(math.random(15, 800), math.random(15, 600), 15, "food")            
         )
     end
     for i=1, 10 do
         table.insert(
-            enemyList,
-            Prop(math.random(15, 800), math.random(15, 600), 15, "enemy")            
+            enemyList_tbl,
+            Prop(math.random(15, 800), math.random(15, 600), 30, "enemy")            
         )
     end
 end
 
 function love.update(dt)
-    if gameState then
-        p1:update(dt)
-        for i,v in ipairs(foodList) do
-            if checkCollision(p1, v) then
-                table.remove(foodList, i)
+    if gameState_bool then
+        autocam:update(dt)
+        p1_obj:update(dt)
+        for i,v in ipairs(foodList_tbl) do
+            if checkCollision(p1_obj, v) then
+                table.remove(foodList_tbl, i)
+                score_int = score_int + 1
             end
         end
-        for i,v in ipairs(enemyList) do
-            if checkCollision(p1, v) then
-                p1:LoseLife()
-                gameState = false
+        for i,v in ipairs(enemyList_tbl) do
+            if checkCollision(p1_obj, v) then
+                shakeDuration_int = 0.3
+                p1_obj:LoseLife()
+                gameState_bool = false
             end
+        end
+    end
+    if shakeDuration_int > 0 then
+        shakeDuration_int = shakeDuration_int - dt
+        if shakeWait_int > 0 then
+            shakeWait_int = shakeWait_int - dt
+        else
+            shakeOffset_int.x = love.math.random(-5,5)
+            shakeOffset_int.y = love.math.random(-5,5)
+            shakeWait_int = 0.05
         end
     end
 end
 
 function love.draw()
-    p1:draw()
-    for i,v in ipairs(foodList) do
+    love.graphics.push()
+    autocam:apply()
+    print("Camera Position: x =", autocam.x, "y =", autocam.y)
+
+    -- camera position
+    --love.graphics.translate(-p1_obj.x + 400, -p1_obj.y + 300)
+    -- shake camera
+    if shakeDuration_int > 0 then
+        love.graphics.translate(shakeOffset_int.x, shakeOffset_int.y)
+    end
+    -- draw background
+    background:draw()
+    -- draw player
+    p1_obj:draw()
+    -- draw food
+    for i,v in ipairs(foodList_tbl) do
         v:draw()
     end
-    for i,v in ipairs(enemyList) do
+    -- draw enemies
+    for i,v in ipairs(enemyList_tbl) do
         v:draw()
     end
+    -- print UI
+    love.graphics.pop()
+    love.graphics.print(score_int, 10, 10)
 end
 
 function checkCollision(object, colObject) 
