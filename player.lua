@@ -31,6 +31,8 @@ function Player:update(dt)
             self:Rotate("right", dt)
         elseif love.keyboard.isDown("left") then
             self:Rotate("left", dt)
+        elseif love.keyboard.isDown("q") then
+            love.load()
         end
 
         -- Apply velocity to position
