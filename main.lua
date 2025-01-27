@@ -32,7 +32,7 @@ function love.load()
     local Sti = require "libs/sti"
     local Camera = require "libs/camera"
     love.graphics.setDefaultFilter("nearest","nearest")
-    gameMap = Sti('assets/weird_sea.lua')
+    gameMap = Sti('assets/weird_sea_edited.lua')
     camera = Camera()
     Object = require "classic"
     local AutoCamera = require "autocamera"
